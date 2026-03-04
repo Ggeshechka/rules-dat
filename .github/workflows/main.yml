@@ -1,4 +1,4 @@
-name: Build RU Rules
+name: Build RU Production Rules
 
 on:
   schedule:
@@ -10,31 +10,32 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Setup Go
-        uses: actions/setup-go@v6
+        uses: actions/setup-go@v5
         with:
-          go-version: 'stable'
+          go-version: '1.21'
 
-      - name: Build geodata
+      - name: Build geosite.dat (RU + Private + Ads)
         run: |
-          wget https://github.com/urunsayan/v2dat/releases/latest/download/v2dat-linux-amd64.tar.gz
-          tar -xf v2dat-linux-amd64.tar.gz
-          chmod +x v2dat
+          git clone https://github.com/v2fly/domain-list-community.git dlc
+          cd dlc
+          go run ./ --exportlists=ru,category-ads-all,private
+          mv dlc.dat ../geosite.dat
+          cd ..
 
-          wget https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geosite.dat -O full_geosite.dat
-          ./v2dat unpack geosite -o ./geosite_dir -f ru -f category-ads-all -f private full_geosite.dat
-          ./v2dat pack geosite -o . ./geosite_dir
-          mv geosite.dat geosite.dat
-
-          wget https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geoip.dat -O full_geoip.dat
-          ./v2dat unpack geoip -o ./geoip_dir -f ru -f private full_geoip.dat
-          ./v2dat pack geoip -o . ./geoip_dir
-          mv geoip.dat geoip.dat
+      - name: Build geoip.dat (RU + Private)
+        run: |
+          git clone https://github.com/v2fly/geoip.git gip
+          cd gip
+          # Генерируем только нужные списки
+          go run ./ --list=ru,private
+          mv geoip.dat ../geoip.dat
+          cd ..
 
       - name: Publish Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: latest
-          name: RU Rules
+          name: RU Production Rules
           files: |
             geosite.dat
             geoip.dat

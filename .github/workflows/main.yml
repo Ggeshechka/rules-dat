@@ -1,4 +1,4 @@
-name: Build RU Production Rules
+name: Build RU Rules
 
 on:
   schedule:

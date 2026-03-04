@@ -1,9 +1,7 @@
 name: Build Lite RU Rules
 
 on:
-  schedule:
-    - cron: "0 22 * * *" # Каждый день в 01:00 по МСК
-  workflow_dispatch:
+  push: 
 
 jobs:
   build:
@@ -24,7 +22,7 @@ jobs:
         run: |
           mkdir -p publish
           mkdir -p custom_data
-          # Копируем только нужные списки из официальной репы
+          # Используем подпапку data/ из склонированной репозитории
           cp community/data/ru custom_data/
           cp community/data/private custom_data/
           cp community/data/category-ads-all custom_data/
@@ -32,16 +30,22 @@ jobs:
       - name: Build geosite.dat
         run: |
           cd community
+          # Собираем базу, указывая путь к нашим отфильтрованным файлам
           go run ./ --datapath=../custom_data
           mv dlc.dat ../publish/geosite.dat
           cd ..
 
-      - name: Build geoip.dat (Lite RU)
+      - name: Build geoip.dat
         run: |
-          # Используем готовый бинарник v2dat для нарезки IP
+          # Скачиваем утилиту для нарезки IP
           curl -L https://github.com/urunsayan/v2dat/releases/download/v0.0.2/v2dat_0.0.2_linux_amd64.tar.gz -o v2dat.tar.gz
           tar -xzf v2dat.tar.gz
+          chmod +x v2dat
+          
+          # Берем свежую полную базу от Loyalsoldier
           wget https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geoip.dat -O full_geoip.dat
+          
+          # Оставляем только RU и локальные сети
           ./v2dat unpack geoip -o ./geoip_out -f ru -f private full_geoip.dat
           ./v2dat pack geoip -o ./publish ./geoip_out
 

@@ -14,22 +14,21 @@ jobs:
         with:
           go-version: 'stable'
 
-      - name: Build geosite.dat (RU + Private + Ads)
+      - name: Build geodata
         run: |
-          git clone https://github.com/v2fly/domain-list-community.git
-          cd domain-list-community
-          go run ./ --exportlists=ru,category-ads-all,private
-          mv dlc.dat ../geosite.dat
-          cd ..
+          wget https://github.com/urunsayan/v2dat/releases/latest/download/v2dat-linux-amd64.tar.gz
+          tar -xf v2dat-linux-amd64.tar.gz
+          chmod +x v2dat
 
-      - name: Build geoip.dat (RU + Private)
-        run: |
-          git clone https://github.com/v2fly/geoip.git
-          cd geoip
-          wget https://github.com/v2fly/geoip/raw/master/config.json
-          go run ./ --format=v2ray --list=ru,private
-          mv geoip.dat ../geoip.dat
-          cd ..
+          wget https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geosite.dat -O full_geosite.dat
+          ./v2dat unpack geosite -o ./geosite_dir -f ru -f category-ads-all -f private full_geosite.dat
+          ./v2dat pack geosite -o . ./geosite_dir
+          mv geosite.dat geosite.dat
+
+          wget https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geoip.dat -O full_geoip.dat
+          ./v2dat unpack geoip -o ./geoip_dir -f ru -f private full_geoip.dat
+          ./v2dat pack geoip -o . ./geoip_dir
+          mv geoip.dat geoip.dat
 
       - name: Publish Release
         uses: softprops/action-gh-release@v2

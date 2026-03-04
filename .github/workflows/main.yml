@@ -24,18 +24,18 @@ jobs:
 
       - name: Build geoip.dat
         run: |
-          # Устанавливаем проверенную утилиту v2dat
-          go install github.com/urunsayan/v2dat@latest
+          # Скачиваем бинарник v2dat напрямую (версия v0.0.2)
+          curl -L https://github.com/urunsayan/v2dat/releases/download/v0.0.2/v2dat_0.0.2_linux_amd64.tar.gz -o v2dat.tar.gz
+          tar -xzf v2dat.tar.gz
+          chmod +x v2dat
           
-          # Скачиваем полную базу
+          # Скачиваем базу
           wget https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geoip.dat -O full_geoip.dat
           
-          # Извлекаем только нужные теги (RU и Private)
-          $(go env GOPATH)/bin/v2dat unpack geoip -o ./geoip_out -f ru -f private full_geoip.dat
-          
-          # Запаковываем обратно в маленький файл
-          $(go env GOPATH)/bin/v2dat pack geoip -o . ./geoip_out
-          mv geoip.dat geoip.dat
+          # Нарезка и сборка
+          ./v2dat unpack geoip -o ./geoip_out -f ru -f private full_geoip.dat
+          ./v2dat pack geoip -o . ./geoip_out
+          # Файл уже называется geoip.dat по умолчанию после pack
 
       - name: Publish Release
         uses: softprops/action-gh-release@v2

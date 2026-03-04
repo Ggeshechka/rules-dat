@@ -14,7 +14,7 @@ jobs:
         with:
           go-version: '1.21'
 
-      - name: Build geosite.dat (RU + Ads + Private)
+      - name: Build geosite.dat
         run: |
           git clone https://github.com/v2fly/domain-list-community.git dlc
           cd dlc
@@ -22,38 +22,20 @@ jobs:
           mv dlc.dat ../geosite.dat
           cd ..
 
-      - name: Build geoip.dat (RU + Private)
+      - name: Build geoip.dat
         run: |
-          git clone https://github.com/v2fly/geoip.git gip
-          cd gip
-          # Создаем файл конфигурации для сборщика
-          echo '{
-            "input": [
-              {
-                "type": "v2ray-geoip",
-                "action": "add",
-                "args": {
-                  "uri": "https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geoip.dat"
-                }
-              }
-            ],
-            "output": [
-              {
-                "type": "v2ray-geoip",
-                "action": "output",
-                "args": {
-                  "filter": {
-                    "names": ["ru", "private"]
-                  },
-                  "outputName": "geoip.dat"
-                }
-              }
-            ]
-          }' > config.json
+          # Устанавливаем проверенную утилиту v2dat
+          go install github.com/urunsayan/v2dat@latest
           
-          go run ./ -c config.json
-          mv output/geoip.dat ../geoip.dat
-          cd ..
+          # Скачиваем полную базу
+          wget https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geoip.dat -O full_geoip.dat
+          
+          # Извлекаем только нужные теги (RU и Private)
+          $(go env GOPATH)/bin/v2dat unpack geoip -o ./geoip_out -f ru -f private full_geoip.dat
+          
+          # Запаковываем обратно в маленький файл
+          $(go env GOPATH)/bin/v2dat pack geoip -o . ./geoip_out
+          mv geoip.dat geoip.dat
 
       - name: Publish Release
         uses: softprops/action-gh-release@v2

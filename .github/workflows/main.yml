@@ -24,10 +24,12 @@ jobs:
 
       - name: Build geoip.dat (RU + Private)
         run: |
-          go install github.com/snet-sjtu/v2dat@latest
-          wget https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geoip.dat -O full_geoip.dat
-          ~/go/bin/v2dat unpack geoip -o ./geoip_custom -f "ru,private" full_geoip.dat
-          ~/go/bin/v2dat pack geoip -o . ./geoip_custom
+          git clone https://github.com/v2fly/geoip.git
+          cd geoip
+          wget https://github.com/v2fly/geoip/raw/master/config.json
+          go run ./ --format=v2ray --list=ru,private
+          mv geoip.dat ../geoip.dat
+          cd ..
 
       - name: Publish Release
         uses: softprops/action-gh-release@v2
